@@ -1,0 +1,419 @@
+---
+title: "Project"
+author: "Jana Ristovska"
+date: '2022-06-14'
+output: 
+  rmdformats::readthedown:
+  html_document:
+    df_print: kable
+    highlight: monochrome
+    toc: yes
+    toc_float: yes
+bibliography: bib.bib
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, error = TRUE)
+library(lubridate)
+library(tidyverse)
+library(stringr)
+library(dplyr)
+library(readxl)
+library(DT)
+library(ggplot2)
+library(Hmisc)
+library(quickReg)
+library(mapview)
+library(ggpubr)
+```
+
+## Introduction
+
+The COVID-19 pandemic, also known as the coronavirus pandemic, is a global pandemic of coronavirus disease 2019 (COVID-19) caused by severe acute respiratory syndrome coronavirus 2 (SARS-CoV-2). The novel virus was first identified from an outbreak in Wuhan, China, in December 2019. Attempts to contain it there failed, allowing the virus to spread worldwide. The World Health Organization (WHO) declared a Public Health Emergency of International Concern on 30 January 2020 and a pandemic on 11 March 2020. As of 15 June 2022, the pandemic had caused more than 536 million cases and 6.31 million confirmed deaths, making it one of the deadliest in history.
+
+COVID-19 symptoms range from undetectable to deadly, but most commonly include fever, dry cough, and fatigue. Severe illness is more likely in elderly patients and those with certain underlying medical conditions. COVID‑19 transmits when people breathe in air contaminated by droplets and small airborne particles containing the virus. The risk of breathing these in is highest when people are in close proximity, but they can be inhaled over longer distances, particularly indoors. Transmission can also occur if contaminated fluids reach the eyes, nose or mouth, and, rarely, via contaminated surfaces. Infected persons are typically contagious for 10 days, and can spread the virus even if they do not develop symptoms. Mutations have produced many strains (variants) with varying degrees of infectivity and virulence.
+
+
+```{r, message=FALSE, echo=FALSE}
+
+```
+
+## Presentation and description of the problem
+In the following parts I will be analyzing and studying the data from 3 data sets that include information about the COVID-19 progression for each day starting form 20th January 2020 to 27th July 2020, the first 6 months when the sppread of the virus started. (that time of period was included in the dataset), for every country including confirmed cases, deaths, recoveries and many more. 
+
+Including some tables I will be representing some selected data relevant to the covid situation in Slovenia, and in the world overall. Additionally using plots I will visualize certain interesting data. 
+```{r, message=FALSE, echo=FALSE}
+country_total<-read.csv("worldometer_data.csv")
+daily_total<-read.csv("day_wise.csv")
+country_daily<-read.csv("covid_19_clean_complete.csv")
+```
+
+## Presentation of the data
+### Data pt. 1
+In the first dataset we have the total information summed up until July 27th 2020. 
+```{r, message=FALSE, echo=FALSE}
+country_total$NewCases <-NULL
+country_total$NewDeaths <-NULL
+country_total$NewRecovered <-NULL
+country_total$Serious.Critical <-NULL
+datatable(country_total, rownames = FALSE, options = list(pageLength = 5, scrollX=T), style = 'bootstrap',class = 'table-bordered table-condensed', caption =  'Table 1. Total data per country at July 27th 2020')
+```
+* **Country**
+  + The Country that the data is show for
+  
+* **Continent**
+  + The Continent where the country is located
+  
+* **Population**
+  + Population of the country at the given moment (last updated 27th July 2020)
+    
+* **Total Cases** 
+  + Total confirmed positive covid cases at the given moment (last updated 27th July 2020)
+  
+* **Total Deaths** 
+  + Total confirmed deaths from covid at the given moment (last updated 27th July 2020)
+  
+* **Total Recovered** 
+  + Total recovered people from covid at the given moment (last updated 27th July 2020)
+  
+* **Active cases**
+  + Current active covid cases (last updated 27th July 2020)
+  
+* **Total Cases per 1 Million population** 
+  + Total confirmed positive covid cases per 1 Million population at the given moment (last updated 27th July 2020)
+  
+* **Total Deaths per 1 Million population** 
+  + Total confirmed deaths from covid per 1 Million population at the given moment (last updated 27th July 2020)
+  
+* **Total Tests** 
+  + Total covid tests distributed at the given moment (last updated 27th July 2020)
+  
+* **Total Tests per 1 Million population** 
+  + Total covid tests distributed at the given moment per 1 Million population(last updated 27th July 2020)
+  
+* **WHO Region**
+  + The region the Country belongs to according to World Health Organization (WHO)
+  
+* **Lat**
+  + Latitude of the Country
+  
+* **Long**
+  + Longitude of the Country
+  
+Some interesting insights from the data set are shown: 
+```{r, message=FALSE, echo=FALSE}
+describe(country_total$Continent)%>%html()
+```
+  
+### Data pt.2
+In the second data table named Daily_Total, we have data about how the covid situation progressed each day worldwide up until 27th July 2020. 
+  
+```{r, message=FALSE, echo=FALSE}
+datatable(daily_total, rownames = FALSE, options = list(pageLength = 5, scrollX=T), style = 'bootstrap',class = 'table-bordered table-condensed', caption =  'Table 2. Worldwide progression per day until July 27th 2020')
+```
+* **Date**
+  + The date that the data is presented about
+    
+* **Confirmed** 
+  + Total confirmed positive covid cases on the given date
+  
+* **Deaths** 
+  + Total confirmed deaths from covid on the given date
+  
+* **Recovered** 
+  + Total recovered people from covid on the given date
+  
+* **Active**
+  + Current active covid cases on the given date
+  
+* **New Cases** 
+  + Number of new confirmed positive covid cases in the last 24h
+  
+* **New Deaths** 
+  + Number of new confirmed deaths from in the last 24h
+
+* **New Recovered** 
+  + Number of people that have recovered from covid in the last 24h
+
+* **Number of Countries** 
+  + Number of countries currently afffected by covid
+
+Some interesting insights from the data set are shown: 
+<br />
+```{r, message=FALSE, echo=FALSE}
+describe(daily_total$New.cases)%>%html()
+```
+<br />
+```{r, message=FALSE, echo=FALSE}
+describe(daily_total$New.deaths)%>%html()
+```
+<br />
+
+### Data pt.3
+And our third and biggest data set named Country_Daily contains data of how covid progressed in each province and county, every day for the first 6months of covid. (22nd January - 27th July 2020)
+```{r, message=FALSE, echo=FALSE}
+# the data table consists of too many entries to be displayed so we are going to shroten it for display purposes
+datatable(head(country_daily, 1000), rownames = FALSE, options = list(pageLength = 5, scrollX=T), style = 'bootstrap',class = 'table-bordered table-condensed', caption =  'Table 3. Daily updates per country untill July 27th 2020')
+```
+* **Province**
+  + The Province that the data is show for
+  
+* **Country**
+  + The Country that the province is located
+  
+* **Date**
+  + The date that the data is presented about
+    
+* **Confirmed** 
+  + Total confirmed positive covid cases on the given date
+  
+* **Deaths** 
+  + Total confirmed deaths from covid on the given date
+  
+* **Recovered** 
+  + Total recovered people from covid on the given date
+  
+* **Active**
+  + Current active covid cases on the given date
+  
+* **WHO Region**
+  + The region the Country belongs to according to World Health Organization (WHO)
+
+Some interesting insights from the data set are shown: 
+```{r, message=FALSE, echo=FALSE}
+describe(country_daily$WHO.Region)%>%html()
+```
+<br />
+
+### Last update: 27 July 2020
+
+```{r, message=FALSE, echo=FALSE}
+daily_total[nrow(daily_total), c('Date', 'Confirmed', 'Deaths', 'Recovered', 'Active')] -> x
+datatable(x, rownames = NULL, caption =  'Table 4. Covid update July 27th 2020')
+```
+
+## Exploratory Data Analysis and Visualization
+The analysis was done on the total active cases, confirmed cases, deaths and recovery worldwide as provided in the dataset from 20 January 2020 to 27 July, 2020. Till now (27 July 2020), the count of confirmed cases globally is 16.114.449. The total count of death cases reached a value of 646.641 globally. This increase in the total number of active cases is an indication that the recovered cases and the total number of global deaths are dropping in comparison to the count of confirmed cases drastically.
+
+### Number of cases & Number of deaths
+In this plot we are going to have to re-scale the confirmed cases and confirmed deaths since the amount of deaths is significantly lower and the line won't be as visible. However we are including scales on both sides for actual number representation. 
+<br />
+```{r, message=FALSE, echo=FALSE}
+coeff <- 10
+wtotal <- daily_total %>%
+  ggplot(aes(Date, Confirmed, group = 1)) +
+  geom_line(color = "orange") +
+  theme(legend.position = "none") +
+  geom_line(aes(x = Date, y = Deaths * coeff), color = "red", group = 1) +
+  scale_y_continuous(
+    labels = scales::comma,
+    name = "Confirmed",
+    sec.axis = sec_axis(Deaths ~ . / coeff,
+      name = "Deaths",
+      labels = scales::comma
+    )
+  ) +
+  theme(
+    axis.title.y = element_text(color = "orange", size = 13),
+    axis.title.y.right = element_text(color = "red", size = 13)
+  ) +
+  labs(
+    title = "New Cases vs. Deaths",
+    subtitle = "Worldwide",
+    caption = "Graph 1. New Confirmed cases and Confirmed Deaths worldwide per day",
+    x = "Date"
+  )
+show(wtotal)
+
+```
+<br />
+We can see in this plot the cases per day, but since we have a lot of days it looks a bit messy. 
+In the following plot we will try to visualize the data per month and make it smoother for easier understanding
+<br />
+```{r, message=FALSE, echo=FALSE}
+daily_total$Date %>% as_date(format = "%m/%d/%Y")-> dates
+
+# visualize the relationship between rolling average of weekly cases and deaths
+coeff <- 10
+wtotal <- daily_total %>%
+  ggplot(aes(month(dates), Confirmed, group = 1)) +
+  stat_smooth(color = "orange") +
+  theme(legend.position = "none") +
+  stat_smooth(aes(x = month(dates), y = Deaths * coeff), color = "red", group = 1) +
+  scale_y_continuous(
+    labels = scales::comma,
+    name = "Confirmed",
+    sec.axis = sec_axis(Deaths ~ . / coeff,
+      name = "Deaths",
+      labels = scales::comma
+    )
+  ) +
+  theme(
+    axis.title.y = element_text(color = "orange", size = 13),
+    axis.title.y.right = element_text(color = "red", size = 13)
+  ) +
+  labs(
+    title = "New Cases vs. Deaths",
+    subtitle = "Worldwide",
+    caption = "Graph 2. Confirmed cases and Confirmed Deaths worldwide per Month ",
+    x = "Date"
+  )
+show(wtotal)
+
+```
+<br />
+Here we can see the total cases and deaths for Slovenia
+<br />
+<br />
+```{r, message=FALSE, echo=FALSE}
+coeff <- 2
+country_daily[country_daily$Country == "Slovenia", ] -> slo
+stotal <- slo %>%
+  ggplot(aes(Date, Confirmed, group = 1)) +
+  geom_line(color = "orange") +
+  theme(legend.position = "none") +
+  geom_line(aes(x = Date, y = Deaths * coeff), color = "red", group = 1) +
+  scale_y_continuous(
+    labels = scales::comma,
+    name = "Confirmed",
+    sec.axis = sec_axis(Deaths ~ . / coeff,
+      name = "Deaths",
+      labels = scales::comma
+    )
+  ) +
+  theme(
+    axis.title.y = element_text(color = "orange", size = 13),
+    axis.title.y.right = element_text(color = "red", size = 13)
+  ) +
+  labs(
+    title = "New Cases vs. Deaths",
+    subtitle = "In Slovenia",
+    caption = "Graph 3. New Confirmed cases and Confirmed Deaths in Slovenia per day ",
+    x = "Date"
+  )
+show(stotal)
+
+
+```
+
+<br />
+
+### *Correlation between number of Recovered cases and Death cases*
+<br />
+```{r, message=FALSE, echo=FALSE}
+daily_total%>%select(Confirmed,Deaths,Recovered)%>%ggplot()+geom_jitter(mapping=aes(x=Deaths, y=Recovered))+geom_density_2d(aes(x=Deaths, y=Recovered))+labs(title="Pattern between Recovered cases vs Death Cases", caption = "Graph 4. Correlation between number of Recovered cases and Death cases")
+```
+We can see that for the first half (first 3 months) we have for every death case, 4 times recovered cases, and in the second part the ratio of recovered cases versus deaths has increased, meaning people started going into quarantine to prevent spreading, and the world learned how to help prevent the cases geting into criticical states that can result with deaths. 
+
+<br />
+
+### *Correlation between geographical locations and covid*
+<br />
+```{r, message=FALSE, echo=FALSE}
+country_daily %>% group_by(WHO.Region) %>% summarise(sum(Confirmed)) -> rwise
+
+
+group<-rwise$WHO.Region
+value<-rwise$`sum(Confirmed)`
+rwise%>%ggplot( aes( x="", y=value, fill=group)) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0)+labs( caption="Graph 5. Number of confirmed cases per Region")+theme_bw()
+
+```
+
+<br />
+From the chart we can see that almost half of the confirmed cases came from North and South America, and the least from Africa and Western Pacific. 
+<br />
+```{r, message=FALSE, echo=FALSE}
+country_daily %>% group_by(WHO.Region) %>% summarise(sum(Deaths)) -> rwise
+
+
+group<-rwise$WHO.Region
+value<-rwise$`sum(Deaths)`
+rwise%>%ggplot( aes( x="", y=value, fill=group)) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0)+labs( caption="Graph 6. Number of deaths per Region")+theme_bw()
+
+```
+
+<br />
+However we can see that the largest percentage of deaths happened in Europe. This may correlate to the fact that Europe in general has oldest population, and they were more susceptible to serious symptoms leading to death. 
+
+
+### *Cases per capita evaluation*
+The number of deaths and cases is also irrelevant without the knowledge of how many people live in that country. 
+We want to see which countries had the most cases per capita and deaths per capita.
+<br />
+```{r, message=FALSE, echo=FALSE}
+conf<- country_total[order(country_total$Tot.Cases.1M.pop), ] %>% head(5)
+deat<- country_total[order(country_total$Deaths.1M.pop), ] %>% head(5)
+
+group1<-conf$Country
+group2<-deat$Country
+value1<-conf$Tot.Cases.1M.pop
+value2<-deat$Deaths.1M.pop
+
+cc<-conf%>%ggplot(aes( x="", y=value1, fill=group1)) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0)+labs(caption="Graph 7. Highest cases per 1 milion population")+
+  scale_fill_brewer()
+
+dd<-deat%>%ggplot(aes( x="", y=value2, fill=group2)) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0)+labs(caption="Graph 8. Highest deaths per 1 milion population")+
+  scale_fill_brewer()
+
+ggarrange(cc, dd,
+          ncol = 2, nrow = 1, align = 'hv')
+
+```
+<br />
+From this we can see that Myanmar and Vietnam are in general the countries with highest cases and deaths per capita. 
+Cambodia has the highest number of confirmed cases, but as we can see that doesn't mean that it has the highest number of deaths as well. Same applies vice versa, where we have Burundi with the highest number of deaths per 1 mil. population, but it is not even on the top 5 with most cases per 1 mil. population.
+<br />
+
+### *Covid Tests*
+After the outbreak, the covid PCR test started becoming popular aand severely used. This may not be the case for all the countries, since at the begining the tests wer expensive and people were not able to afford them. 
+It would make sense that the countries with most people infected by the number of population would distribute the most tests per capita, but let's check if that is correct. 
+We will choose to display 6 countries, 3 with highest number of cases per 1 mil. population, and 3 with highest number of covid tests per 1 mil. population
+<br />
+```{r, message=FALSE, echo=FALSE}
+cases<- country_total[order(country_total$Tot.Cases.1M.pop), ] %>% head(3)
+tests<- country_total[order(country_total$Tests.1M.pop), ] %>% head(3)
+data<- full_join(cases, tests)
+
+
+c1<-data%>% 
+  ggplot(aes(x = Country, y= Tot.Cases.1M.pop)) + 
+  geom_bar(stat="identity", position = position_dodge())
+c2<-data%>% 
+  ggplot(aes(x = Country, y= Tests.1M.pop)) + 
+  geom_bar(stat="identity", position = position_dodge()) 
+ggarrange(c1, c2,
+          ncol = 2, nrow = 1, align = 'hv')
+```
+
+<br />
+As we can see from the charts unfortunately the countries that have the highest cases per 1 mil. population are not having virtually any tests distributed.
+<br />
+
+### *Map Visuals*
+We will make use of a map plotting and visually represent how many cases in total every country had. 
+Here we can see the number of total cases per country. Every gray point represents > 10.000 cases
+
+```{r, message=FALSE, echo=FALSE}
+max_val = max(abs(country_total$TotalCases), na.rm = T)
+at_5 = lattice::do.breaks(endpoints = c(0, 100000), nint = 5)
+mapview(country_total, xcol = "Long", ycol = "Lat", zcol = "TotalCases", crs = 4269, grid = FALSE, at = at_5)
+```
+<br />
+
+## Conclusion
+As we saw in the data analysis, in the first 6 months of the covid spread we had an rapid increase in new cases as well as deaths. However after the first 3 months, the deaths per confirmed cases didn't increase as much as in the first 3 months. The North and south Americas have the most cases, however Europe had the most fatal cases. 
+From what we saw there is a slight correlation between cases and deaths per capita, but it does not apply in all cases, since some countries may have older population, bad health system and other factors that bring the mortality rate up. Other factors play in fact that not every country distributes PCR tests and this is usually in the countries where we have the most infected people per 1 mil. population, so we can conclude that the factors that increase the number of infected people may be the same reason why they don't have access to covid tests, most probably economy issues or bad health care system and government organisation. 
+
+## References
+
+   @covid19, @wikipedia_2020_covid1, @barnier_2022_rmdformats, @wikipediacontributors_2019_exploratory, @machlis_2021_astonishingly
+...
+
